@@ -68,6 +68,7 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	defer mux.Unlock()
 
 	updateUsers(cfg.Users)
+	updateAzureAd(cfg.AzureAD)
 	updateProxies(cfg.Proxies, cfg.Providers)
 	updateRules(cfg.Rules)
 	updateHosts(cfg.Hosts)
@@ -197,6 +198,21 @@ func updateUsers(users []auth.AuthUser) {
 	if authenticator != nil {
 		log.Infoln("Authentication of local server updated")
 	}
+}
+
+func updateAzureAd(azureAd *auth.AzureADConfig) {
+	if azureAd == nil {
+		return
+	}
+	authenticatior, err := auth.NewAzureADAuthenticator(azureAd.ClientID, azureAd.AuthorityURL, azureAd.Scopes)
+	if err != nil {
+		log.Errorln("error loading azure ad authentication: %s", err)
+		return
+	} else {
+		authStore.SetAuthenticator(authenticatior)
+		log.Infoln("Azure AD Authetication updated")
+	}
+
 }
 
 func updateProfile(cfg *config.Config) {

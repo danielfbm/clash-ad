@@ -96,6 +96,7 @@ type Config struct {
 	Profile      *Profile
 	Rules        []C.Rule
 	Users        []auth.AuthUser
+	AzureAD      *auth.AzureADConfig
 	Proxies      map[string]C.Proxy
 	Providers    map[string]providerTypes.ProxyProvider
 }
@@ -129,6 +130,7 @@ type RawConfig struct {
 	TProxyPort         int          `yaml:"tproxy-port"`
 	MixedPort          int          `yaml:"mixed-port"`
 	Authentication     []string     `yaml:"authentication"`
+	AzureAD				RawAzureAD  `yaml:"azure-ad"`
 	AllowLan           bool         `yaml:"allow-lan"`
 	BindAddress        string       `yaml:"bind-address"`
 	Mode               T.TunnelMode `yaml:"mode"`
@@ -150,6 +152,12 @@ type RawConfig struct {
 	Rule          []string                  `yaml:"rules"`
 }
 
+type RawAzureAD struct {
+	ClientID string `yaml:"client-id"`
+	AuthorityURL string `yaml:"authority-url"`
+	Scopes []string `yaml:"scopes"`
+}
+
 // Parse config
 func Parse(buf []byte) (*Config, error) {
 	rawCfg, err := UnmarshalRawConfig(buf)
@@ -167,6 +175,7 @@ func UnmarshalRawConfig(buf []byte) (*RawConfig, error) {
 		BindAddress:    "*",
 		Mode:           T.Rule,
 		Authentication: []string{},
+		AzureAD: RawAzureAD{},
 		LogLevel:       log.INFO,
 		Hosts:          map[string]string{},
 		Rule:           []string{},
@@ -236,6 +245,7 @@ func ParseRawConfig(rawCfg *RawConfig) (*Config, error) {
 	config.DNS = dnsCfg
 
 	config.Users = parseAuthentication(rawCfg.Authentication)
+	config.AzureAD = parseAzureAd(rawCfg.AzureAD)
 
 	return config, nil
 }
@@ -642,4 +652,17 @@ func parseAuthentication(rawRecords []string) []auth.AuthUser {
 		}
 	}
 	return users
+}
+
+
+func parseAzureAd(rawAzureAD RawAzureAD) (config *auth.AzureADConfig) {
+	if rawAzureAD.AuthorityURL == "" && rawAzureAD.ClientID == "" && len(rawAzureAD.Scopes) == 0 {
+		return
+	}
+	config = &auth.AzureADConfig{
+		AuthorityURL: rawAzureAD.AuthorityURL,
+		Scopes: rawAzureAD.Scopes,
+		ClientID: rawAzureAD.ClientID,
+	}
+	return
 }
