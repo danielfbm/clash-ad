@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"testing"
 	"context"
+	"testing"
 	// "fmt"
 	// "log"
 
@@ -18,14 +18,12 @@ func TestAzureAD(t *testing.T) {
 	pass := "" //nolint
 	scopes := []string{"profile"}
 
-
 	publicClientApp, err := public.New(clientId, public.WithAuthority(authorityURL))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Logf("got public client app")
-
 
 	result, err := publicClientApp.AcquireTokenByUsernamePassword(
 		context.Background(),
@@ -34,7 +32,6 @@ func TestAzureAD(t *testing.T) {
 		pass,
 	)
 	t.Logf("result: %v err:  %v", result.Account, err)
-
 
 	var userAccount public.Account
 	accounts := publicClientApp.Accounts()
